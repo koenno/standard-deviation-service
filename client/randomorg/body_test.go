@@ -39,15 +39,17 @@ func TestShouldParseBytesToIntegers(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		// given
-		contentType := "text/plain; charset=utf-8"
-		sut := NewBodyParser()
+		t.Run(test.name, func(t *testing.T) {
+			// given
+			contentType := "text/plain; charset=utf-8"
+			sut := NewBodyParser()
 
-		// when
-		integers, err := sut.ParseIntegers(test.input, contentType)
+			// when
+			integers, err := sut.ParseIntegers(test.input, contentType)
 
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, test.expected, integers)
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, integers)
+		})
 	}
 }
