@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,11 @@ import (
 )
 
 func main() {
-	rateLimiter := rate.NewLimiter(rate.Every(time.Second), 10)
+	reqsPerSec := flag.Int("reqs", 10, "number of requests per second")
+	port := flag.Int("port", 8080, "port number")
+	flag.Parse()
+
+	rateLimiter := rate.NewLimiter(rate.Every(time.Second), *reqsPerSec)
 	reqSender := client.New(rateLimiter)
 	respParser := randomorg.NewBodyParser()
 	reqFactory := randomorg.NewRequestFactory()
@@ -24,7 +29,7 @@ func main() {
 
 	calculator := service.NewStdDevService()
 
-	srv := server.NewRandomServer(generator, calculator)
+	srv := server.NewRandomServer(generator, calculator, *port)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"golang.org/x/exp/slog"
 )
 
 var (
@@ -39,6 +41,8 @@ func (c Client) Send(req *http.Request) ([]byte, string, error) {
 			return nil, "", fmt.Errorf("failed to limit a rate: %v", err)
 		}
 	}
+
+	slog.Info("client sends a request", "req", req)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

@@ -29,9 +29,10 @@ type RandomServer struct {
 	srv        http.Server
 	generator  RandomIntegerGenerator
 	calculator StdDevCalculator
+	port       int
 }
 
-func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculator) *RandomServer {
+func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculator, port int) *RandomServer {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
@@ -39,11 +40,12 @@ func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculat
 
 	s := &RandomServer{
 		srv: http.Server{
-			Addr:    ":8080",
+			Addr:    fmt.Sprintf(":%d", port),
 			Handler: r,
 		},
 		generator:  generator,
 		calculator: calculator,
+		port:       port,
 	}
 
 	r.Get("/random/mean", s.Mean)
@@ -51,6 +53,7 @@ func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculat
 }
 
 func (s *RandomServer) Run() {
+	slog.Info("server is running", "timestamp", time.Now(), "port", s.port)
 	err := s.srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		slog.Error("server error", "timestamp", time.Now(), "error", err)
