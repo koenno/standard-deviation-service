@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,14 +18,28 @@ var (
 	}
 )
 
-type Client struct {
+//go:generate mockery --name=RateLimiter --case underscore --with-expecter
+type RateLimiter interface {
+	Wait(ctx context.Context) (err error)
 }
 
-func New() Client {
-	return Client{}
+type Client struct {
+	rateLimiter RateLimiter
+}
+
+func New(rateLimiter RateLimiter) Client {
+	return Client{
+		rateLimiter: rateLimiter,
+	}
 }
 
 func (c Client) Send(req *http.Request) ([]byte, string, error) {
+	if c.rateLimiter != nil {
+		if err := c.rateLimiter.Wait(req.Context()); err != nil {
+			return nil, "", fmt.Errorf("failed to limit a rate: %v", err)
+		}
+	}
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: %v", ErrSendRequest, err)
