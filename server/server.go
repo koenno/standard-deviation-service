@@ -88,7 +88,7 @@ func (s *RandomServer) Mean(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *RandomServer) doMean(ctx context.Context, requests, numbers int) ([]service.StdDevResult, error) {
-	pipe := make(chan []int)
+	pipe := make(chan []int, requests)
 
 	resultPipe := s.calculator.Calculate(pipe)
 
@@ -97,6 +97,7 @@ func (s *RandomServer) doMean(ctx context.Context, requests, numbers int) ([]ser
 		g.Go(func() error {
 			randomInts, err := s.generator.Integers(ctx, numbers)
 			if err != nil {
+				// slog.Error("generator failure", "timestamp", time.Now(), "error", err)
 				return err
 			}
 			pipe <- randomInts
