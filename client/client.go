@@ -42,7 +42,7 @@ func (c Client) Send(req *http.Request) ([]byte, string, error) {
 		}
 	}
 
-	slog.Info("client sends a request", "req", req)
+	slog.Info("client sends a request", "method", req.Method, "url", req.URL.String())
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
