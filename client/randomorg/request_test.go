@@ -6,12 +6,16 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/koenno/standard-deviation-service/client"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldReturnProperURLWithDefaultValues(t *testing.T) {
+	// given
+	sut := NewRequestFactory()
+
 	// when
-	req, err := NewRequest(context.Background())
+	req, err := sut.NewRequest(context.Background())
 
 	// then
 	assert.NoError(t, err)
@@ -32,12 +36,15 @@ func TestShouldReturnProperURLWithDefaultValues(t *testing.T) {
 
 func TestShouldReturnProperURLWithCustomValues(t *testing.T) {
 	// given
+	sut := NewRequestFactory()
+
 	min := -11
 	max := 435
 	quantity := 23
 
 	// when
-	req, err := NewRequest(context.Background(), WithQuantity(quantity), WithMin(min), WithMax(max))
+	req, err := sut.NewRequest(context.Background(),
+		client.WithQuantity(quantity), client.WithMin(min), client.WithMax(max))
 
 	// then
 	assert.NoError(t, err)

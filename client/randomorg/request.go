@@ -6,47 +6,19 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/koenno/standard-deviation-service/client"
 )
 
-type options struct {
-	min      int
-	max      int
-	quantity int
+type RequestFactory struct {
 }
 
-func newOptions() *options {
-	return &options{
-		min:      1,
-		max:      10,
-		quantity: 5,
-	}
+func NewRequestFactory() RequestFactory {
+	return RequestFactory{}
 }
 
-type Option func(*options)
-
-func WithMin(min int) Option {
-	return func(o *options) {
-		o.min = min
-	}
-}
-
-func WithMax(max int) Option {
-	return func(o *options) {
-		o.max = max
-	}
-}
-
-func WithQuantity(quantity int) Option {
-	return func(o *options) {
-		o.quantity = quantity
-	}
-}
-
-func NewRequest(ctx context.Context, opts ...Option) (*http.Request, error) {
-	cfg := newOptions()
-	for _, o := range opts {
-		o(cfg)
-	}
+func (f RequestFactory) NewRequest(ctx context.Context, opts ...client.Option) (*http.Request, error) {
+	cfg := client.NewOptions(opts...)
 
 	rawURL := "https://www.random.org/integers/?num=5&min=1&max=100&col=1&base=10&format=plain&rnd=new"
 	URL, err := url.Parse(rawURL)
@@ -55,9 +27,9 @@ func NewRequest(ctx context.Context, opts ...Option) (*http.Request, error) {
 	}
 
 	query := URL.Query()
-	query.Set("min", strconv.Itoa(cfg.min))
-	query.Set("max", strconv.Itoa(cfg.max))
-	query.Set("num", strconv.Itoa(cfg.quantity))
+	query.Set("min", strconv.Itoa(cfg.Min))
+	query.Set("max", strconv.Itoa(cfg.Max))
+	query.Set("num", strconv.Itoa(cfg.Quantity))
 	URL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, URL.String(), nil)

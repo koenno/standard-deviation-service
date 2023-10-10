@@ -3,6 +3,7 @@ package random
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/koenno/standard-deviation-service/random/mocks"
@@ -14,10 +15,13 @@ func TestShouldReturnErrorWhenRequestFails(t *testing.T) {
 	// given
 	senderMock := mocks.NewRequestSender(t)
 	parserMock := mocks.NewResponseParser(t)
-	sut := NewRandom(senderMock, parserMock)
+	reqFactoryMock := mocks.NewRequestFactory(t)
+	sut := NewRandom(senderMock, parserMock, reqFactoryMock)
 	quantity := 4
 
-	senderMock.EXPECT().Send(mock.AnythingOfType("*http.Request")).Return(nil, "", errors.New("failure")).Once()
+	req, err := http.NewRequest(http.MethodGet, "some.domain.com", nil)
+	reqFactoryMock.EXPECT().NewRequest(mock.Anything, mock.Anything).Return(req, err).Once()
+	senderMock.EXPECT().Send(req).Return(nil, "", errors.New("failure")).Once()
 
 	// when
 	ints, err := sut.Integers(context.Background(), quantity)
@@ -32,11 +36,14 @@ func TestShouldReturnErrorWhenParsingResponseFails(t *testing.T) {
 	// given
 	senderMock := mocks.NewRequestSender(t)
 	parserMock := mocks.NewResponseParser(t)
-	sut := NewRandom(senderMock, parserMock)
+	reqFactoryMock := mocks.NewRequestFactory(t)
+	sut := NewRandom(senderMock, parserMock, reqFactoryMock)
 	quantity := 4
 	contentType := "text/plain"
 	response := []byte("")
 
+	req, err := http.NewRequest(http.MethodGet, "some.domain.com", nil)
+	reqFactoryMock.EXPECT().NewRequest(mock.Anything, mock.Anything).Return(req, err).Once()
 	senderMock.EXPECT().Send(mock.AnythingOfType("*http.Request")).Return(response, contentType, nil).Once()
 	parserMock.EXPECT().ParseIntegers(mock.Anything, mock.Anything).Return(nil, errors.New("failure")).Once()
 
@@ -52,12 +59,15 @@ func TestShouldReturnGeneratedIntegers(t *testing.T) {
 	// given
 	senderMock := mocks.NewRequestSender(t)
 	parserMock := mocks.NewResponseParser(t)
-	sut := NewRandom(senderMock, parserMock)
+	reqFactoryMock := mocks.NewRequestFactory(t)
+	sut := NewRandom(senderMock, parserMock, reqFactoryMock)
 	quantity := 4
 	contentType := "text/plain"
 	response := []byte("")
 	expectedInts := []int{1, 7, 4}
 
+	req, err := http.NewRequest(http.MethodGet, "some.domain.com", nil)
+	reqFactoryMock.EXPECT().NewRequest(mock.Anything, mock.Anything).Return(req, err).Once()
 	senderMock.EXPECT().Send(mock.AnythingOfType("*http.Request")).Return(response, contentType, nil).Once()
 	parserMock.EXPECT().ParseIntegers(response, contentType).Return(expectedInts, nil).Once()
 

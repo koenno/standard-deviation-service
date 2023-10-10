@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/koenno/standard-deviation-service/client/randomorg"
+	"github.com/koenno/standard-deviation-service/client"
 )
 
 var (
@@ -14,6 +14,11 @@ var (
 	ErrGenerator = errors.New("random generator failure")
 	ErrItems     = errors.New("failed to obtain random items")
 )
+
+//go:generate mockery --name=RequestFactory --case underscore --with-expecter
+type RequestFactory interface {
+	NewRequest(ctx context.Context, opts ...client.Option) (*http.Request, error)
+}
 
 //go:generate mockery --name=RequestSender --case underscore --with-expecter
 type RequestSender interface {
@@ -26,19 +31,21 @@ type ResponseParser interface {
 }
 
 type Random struct {
+	reqFactory RequestFactory
 	reqSender  RequestSender
 	respParser ResponseParser
 }
 
-func NewRandom(reqSender RequestSender, respParser ResponseParser) Random {
+func NewRandom(reqSender RequestSender, respParser ResponseParser, reqFactory RequestFactory) Random {
 	return Random{
+		reqFactory: reqFactory,
 		reqSender:  reqSender,
 		respParser: respParser,
 	}
 }
 
 func (r Random) Integers(ctx context.Context, quantity int) ([]int, error) {
-	req, err := randomorg.NewRequest(ctx, randomorg.WithQuantity(quantity))
+	req, err := r.reqFactory.NewRequest(ctx, client.WithQuantity(quantity))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInit, err)
 	}
