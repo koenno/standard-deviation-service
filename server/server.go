@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -37,6 +36,7 @@ func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculat
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(validationMiddleware)
 
 	s := &RandomServer{
 		srv: http.Server{
@@ -48,7 +48,11 @@ func NewRandomServer(generator RandomIntegerGenerator, calculator StdDevCalculat
 		port:       port,
 	}
 
-	r.Get("/random/mean", s.Mean)
+	r.Route("/random", func(r chi.Router) {
+		r.Use(validationMiddleware)
+		r.Get("/mean", s.Mean)
+	})
+
 	return s
 }
 
@@ -68,18 +72,8 @@ func (s *RandomServer) Stop() {
 }
 
 func (s *RandomServer) Mean(w http.ResponseWriter, r *http.Request) {
-	requestsStr := r.URL.Query().Get("requests")
-	requests, err := strconv.Atoi(requestsStr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	lengthStr := r.URL.Query().Get("length")
-	length, err := strconv.Atoi(lengthStr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	requests, _ := paramPositiveInt(r, "requests")
+	length, _ := paramPositiveInt(r, "length")
 
 	res, err := s.doMean(r.Context(), requests, length)
 	if err != nil {

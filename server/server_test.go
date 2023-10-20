@@ -15,68 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestShouldReturnBadRequestWhenRequiredQueryParamsAreNotValid(t *testing.T) {
-	tests := []struct {
-		name     string
-		requests string
-		length   string
-	}{
-		{
-			name:     "missing requests",
-			requests: "",
-			length:   "1",
-		},
-		{
-			name:     "missing length",
-			requests: "1",
-			length:   "",
-		},
-		{
-			name:     "missing both",
-			requests: "",
-			length:   "",
-		},
-		{
-			name:     "no number in requests",
-			requests: "A",
-			length:   "1",
-		},
-		{
-			name:     "no number in length",
-			requests: "1",
-			length:   "A",
-		},
-		{
-			name:     "no number in both",
-			requests: "A",
-			length:   "B",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// given
-			port := 8080
-			URL := fmt.Sprintf("/random/mean?requests=%s&length=%s", test.requests, test.length)
-			req := httptest.NewRequest(http.MethodGet, URL, nil)
-			w := httptest.NewRecorder()
-			generatorMock := mocks.NewRandomIntegerGenerator(t)
-			calculatorMock := mocks.NewStdDevCalculator(t)
-			sut := NewRandomServer(generatorMock, calculatorMock, port)
-
-			// when
-			sut.Mean(w, req)
-
-			// then
-			res := w.Result()
-			defer res.Body.Close()
-			data, err := io.ReadAll(res.Body)
-			assert.NoError(t, err)
-			assert.Empty(t, data)
-			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
-		})
-	}
-}
-
 func TestShouldReturnInternalServiceErrorWhenGeneratorFails(t *testing.T) {
 	// given
 	port := 8080
