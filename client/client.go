@@ -49,7 +49,12 @@ func (c Client) Send(req *http.Request) ([]byte, string, error) {
 		return nil, "", fmt.Errorf("%w: %v", ErrSendRequest, err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			slog.Error("failed to close a response body", "error", err)
+		}
+	}()
 	payloadBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: unable to read body: %v", ErrResponse, err)
