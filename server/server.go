@@ -88,7 +88,11 @@ func (s *RandomServer) Mean(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		slog.Error("failed to encode the payload", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (s *RandomServer) doMean(ctx context.Context, requests, numbers int) ([]service.StdDevResult, error) {
