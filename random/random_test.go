@@ -61,7 +61,7 @@ func TestShouldReturnGeneratedIntegers(t *testing.T) {
 	parserMock := mocks.NewResponseParser(t)
 	reqFactoryMock := mocks.NewRequestFactory(t)
 	sut := NewRandom(senderMock, parserMock, reqFactoryMock)
-	quantity := 4
+	quantity := 3
 	contentType := "text/plain"
 	response := []byte("")
 	expectedInts := []int{1, 7, 4}
